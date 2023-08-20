@@ -1,12 +1,13 @@
 {
-  "name": "app",
+  "name": "algora-desktop",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@types/node": "20.5.1",
