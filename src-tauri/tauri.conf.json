@@ -4,7 +4,8 @@
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
     "devPath": "http://localhost:3000",
-    "distDir": "../out"
+    "distDir": "../out",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "algora-desktop",
@@ -12,7 +13,9 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "notification": {
+        "all": true
+      }
     },
     "bundle": {
       "active": true,
