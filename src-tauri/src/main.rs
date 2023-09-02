@@ -6,7 +6,7 @@ fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
 }
 
-use tauri::{Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, CustomMenuItem};
+use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tauri_plugin_positioner::{Position, WindowExt};
 
 fn main() {
@@ -48,7 +48,7 @@ fn main() {
             tauri::WindowEvent::Focused(is_focused) => {
                 // detect click outside of the focused window and hide the app
                 if !is_focused {
-                    event.window().hide().unwrap();
+                    //event.window().hide().unwrap();
                 }
             }
             _ => {}

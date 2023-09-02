@@ -54,8 +54,8 @@ export default function Home() {
         <div className="flex">@kremedev</div>
       </div>
       <div className="flex w-full gap-3 p-3 text-2xl items-center">
-        <button className="px-16 py-2 rounded bg-purple-500">Bounties</button>
-        <button className="px-16 py-2 rounded" onClick={notification}>Awards</button>
+        <button className="px-16 py-2 rounded bg-purple-600">Bounties</button>
+        <button className="px-16 py-2 rounded hover:bg-purple-600" onClick={notification}>Awards</button>
       </div>
       <div className="flex w-full flex-col gap-3 p-3">
         <div className="flex p-3 bg-red-500">{lol}</div>
