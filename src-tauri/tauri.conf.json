@@ -65,10 +65,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 400,
+        "height": 375,
         "resizable": false,
         "title": "Algora",
-        "width": 600,
+        "width": 375,
         "visible": false,
         "hiddenTitle": true,
         "decorations": false,

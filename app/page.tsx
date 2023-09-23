@@ -9,10 +9,14 @@ import {
 } from "@tauri-apps/api/notification";
 
 export default function Home() {
-  const [lol, setLol] = useState("fail");
+  const [zaf, setZaf] = useState("fail");
+  const [kreme, setKreme] = useState("fail");
   useEffect(() => {
+    invoke<string>("greet", { name: "zaf" })
+      .then((m) => setZaf(m))
+      .catch(console.error);
     invoke<string>("greet", { name: "kreme" })
-      .then((m) => setLol(m))
+      .then((m) => setKreme(m))
       .catch(console.error);
   }, []);
 
@@ -29,13 +33,13 @@ export default function Home() {
   };
 
   return (
-    <main className="flex w-[500px] flex-col items-center p-3">
+    <main className="min-h-screen flex flex-col bg-[#040217] items-center p-2">
       <div className="flex w-full flex-row items-center justify-between p-3">
         <div className="flex">
           <svg
             aria-hidden="true"
             viewBox="0 0 231.69101 66.82036"
-            className="inline-block h-12 w-auto fill-white"
+            className="inline-block h-10 w-auto fill-white"
           >
             <g transform="translate(-13.600026,-120.24454)">
               <path d="m 116.984,138.78637 v 30.53821 h -5.22816 v -3.76238 a 15.27175,15.27175 0 1 1 0,-23.01875 v -3.76766 z m -5.21493,15.30085 a 10.025062,10.025062 0 1 0 -10.02771,10.02507 10.033,10.033 0 0 0 10.01448,-10.02507 z"></path>
@@ -51,16 +55,74 @@ export default function Home() {
             </g>
           </svg>
         </div>
-        <div className="flex">@kremedev</div>
+        <div className="flex text-xs text-white">@kremedev</div>
       </div>
-      <div className="flex w-full gap-3 p-3 text-2xl items-center">
-        <button className="px-16 py-2 rounded bg-purple-600">Bounties</button>
-        <button className="px-16 py-2 rounded hover:bg-purple-600" onClick={notification}>Awards</button>
+      <div className="flex flex-row w-full rounded-md p-1 text-sm items-center bg-[#1d1e3a]">
+        <button className="flex grow justify-center px-3 py-1.5 rounded-sm text-white bg-[#5046e5]">
+          Bounties
+        </button>
+        <button
+          className="flex grow justify-center px-3 py-1.5 rounded-sm text-gray-400"
+          onClick={notification}
+        >
+          Awards
+        </button>
       </div>
-      <div className="flex w-full flex-col gap-3 p-3">
-        <div className="flex p-3 bg-red-500">{lol}</div>
-        <div className="flex p-3 bg-green-500">2</div>
-        <div className="flex p-3 bg-blue-500">3</div>
+      <div className="flex w-full flex-col gap-3 pt-7 pl-4 text-xs">
+        <div className="flex items-center gap-4 pb-4">
+          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
+            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
+          </div>
+          <div className="flex flex-wrap gap-2 text-white">
+            <span className="font-emoji text-sm">💎</span>
+            <div className="space-y-0.5">
+              <p>
+                <span className="font-bold">{zaf}</span> shared a{" "}
+                <span className="font-bold">$7,777</span> bounty
+              </p>
+              <div className="whitespace-nowrap text-gray-500">
+                {" "}
+                about 7 hours ago
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 pb-4">
+          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
+            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
+          </div>
+          <div className="flex flex-wrap gap-2 text-white">
+            <span className="font-emoji text-sm">💎</span>
+            <div className="space-y-0.5">
+              <p>
+                <span className="font-bold">{kreme}</span> shared a{" "}
+                <span className="font-bold">$7</span> bounty
+              </p>
+              <div className="whitespace-nowrap text-gray-500">
+                {" "}
+                about 7 hours ago
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
+            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
+          </div>
+          <div className="flex flex-wrap gap-2 text-white">
+            <span className="font-emoji text-sm">💎</span>
+            <div className="space-y-0.5">
+              <p>
+                <span className="font-bold">{zaf}</span> shared a{" "}
+                <span className="font-bold">$7,777</span> bounty
+              </p>
+              <div className="whitespace-nowrap text-gray-500">
+                {" "}
+                about 7 hours ago
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

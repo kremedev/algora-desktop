@@ -3,7 +3,7 @@
 
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}!", name)
+    format!("{} from algora", name)
 }
 
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
