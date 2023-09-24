@@ -1,36 +1,84 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
+import { algora, type AlgoraOutput } from "@algora/sdk";
+import Link from "next/link";
+
 import { invoke } from "@tauri-apps/api/tauri";
-import {
-  isPermissionGranted,
-  requestPermission,
-  sendNotification,
-} from "@tauri-apps/api/notification";
+// import {
+//   isPermissionGranted,
+//   requestPermission,
+//   sendNotification,
+// } from "@tauri-apps/api/notification";
+
+type RemoteData<T> =
+  | { _tag: "loading" }
+  | { _tag: "failure"; error: Error }
+  | { _tag: "success"; data: T };
+
+type Bounty = AlgoraOutput["bounty"]["list"]["items"][number];
 
 export default function Home() {
-  const [zaf, setZaf] = useState("fail");
-  const [kreme, setKreme] = useState("fail");
-  useEffect(() => {
-    invoke<string>("greet", { name: "zaf" })
-      .then((m) => setZaf(m))
-      .catch(console.error);
-    invoke<string>("greet", { name: "kreme" })
-      .then((m) => setKreme(m))
-      .catch(console.error);
-  }, []);
+  const [page, setPage] = useState("bounties");
 
-  const notification = async () => {
-    let permissionGranted = await isPermissionGranted();
-    if (!permissionGranted) {
-      const permission = await requestPermission();
-      permissionGranted = permission === "granted";
-    }
-    if (permissionGranted) {
-      sendNotification("Tauri is awesome!");
-      sendNotification({ title: "TAURI", body: "Tauri is awesome!" });
-    }
-  };
+  // const [zaf, setZaf] = useState("fail");
+  // const [kreme, setKreme] = useState("fail");
+  // useEffect(() => {
+  //   invoke<string>("greet", { name: "zaf" })
+  //     .then((m) => setZaf(m))
+  //     .catch(console.error);
+  //   invoke<string>("greet", { name: "kreme" })
+  //     .then((m) => setKreme(m))
+  //     .catch(console.error);
+  // }, []);
+
+  // const notification = async () => {
+  //   let permissionGranted = await isPermissionGranted();
+  //   if (!permissionGranted) {
+  //     const permission = await requestPermission();
+  //     permissionGranted = permission === "granted";
+  //   }
+  //   if (permissionGranted) {
+  //     sendNotification("Tauri is awesome!");
+  //     sendNotification({ title: "TAURI", body: "Tauri is awesome!" });
+  //   }
+  // };
+
+  const [bounties, setBounties] = useState<RemoteData<Bounty[]>>({
+    _tag: "loading",
+  });
+  const [awards, setAwards] = useState<RemoteData<Bounty[]>>({
+    _tag: "loading",
+  });
+  useEffect(() => {
+    const ac = new AbortController();
+
+    algora.bounty.listWithClaims
+      .query({ limit: 11 }, { signal: ac.signal })
+      .then(({ items: data }) =>
+        data.filter((b) => b.type === "standard" && b.status === "active")
+      )
+      .then((data) =>
+        data.sort((a, b) => {
+          return a.created_at.getHours() - b.created_at.getHours();
+        })
+      )
+      .then((data) => setBounties({ _tag: "success", data }))
+      .catch((error) => setBounties({ _tag: "failure", error }));
+
+    algora.bounty.list
+      .query({ org: "capgo", limit: 4, rewarded: true }, { signal: ac.signal })
+      .then(({ items: data }) =>
+        data.sort((a, b) => {
+          return a.created_at.getHours() - b.created_at.getHours();
+        })
+      )
+      .then((data) => setAwards({ _tag: "success", data }))
+      .catch((error) => setAwards({ _tag: "failure", error }));
+
+    return () => ac.abort();
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col bg-[#040217] items-center p-2">
@@ -58,72 +106,102 @@ export default function Home() {
         <div className="flex text-xs text-white">@kremedev</div>
       </div>
       <div className="flex flex-row w-full rounded-md p-1 text-sm items-center bg-[#1d1e3a]">
-        <button className="flex grow justify-center px-3 py-1.5 rounded-sm text-white bg-[#5046e5]">
+        <button
+          className={`flex grow justify-center px-3 py-1.5 rounded-sm ${
+            page === "bounties" ? "bg-[#5046e5] text-white" : "text-gray-400"
+          }`}
+          onClick={() => setPage("bounties")}
+        >
           Bounties
         </button>
         <button
-          className="flex grow justify-center px-3 py-1.5 rounded-sm text-gray-400"
-          onClick={notification}
+          className={`flex grow justify-center px-3 py-1.5 rounded-sm ${
+            page === "awards" ? "bg-[#5046e5] text-white" : "text-gray-400"
+          }`}
+          onClick={() => setPage("awards")}
         >
           Awards
         </button>
       </div>
-      <div className="flex w-full flex-col gap-3 pt-7 pl-4 text-xs">
-        <div className="flex items-center gap-4 pb-4">
-          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
-            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
-          </div>
-          <div className="flex flex-wrap gap-2 text-white">
-            <span className="font-emoji text-sm">💎</span>
-            <div className="space-y-0.5">
-              <p>
-                <span className="font-bold">{zaf}</span> shared a{" "}
-                <span className="font-bold">$7,777</span> bounty
-              </p>
-              <div className="whitespace-nowrap text-gray-500">
-                {" "}
-                about 7 hours ago
-              </div>
-            </div>
-          </div>
+      {page === "bounties" ? (
+        <ul className="flex w-full flex-col gap-3 p-4 text-xs">
+          {bounties._tag === "success" &&
+            bounties.data.map((bounty) => (
+              <li key={bounty.id}>
+                <BountyCard bounty={bounty} />
+              </li>
+            ))}
+          {bounties._tag === "loading" && (
+            <div className="text-white">loading...</div>
+          )}
+        </ul>
+      ) : (
+        <ul className="flex w-full flex-col gap-3 p-4 text-xs">
+          {awards._tag === "success" &&
+            awards.data.map((award) => (
+              <li key={award.id}>
+                <AwardCard award={award} />
+              </li>
+            ))}
+          {awards._tag === "loading" && (
+            <div className="text-white">loading...</div>
+          )}
+        </ul>
+      )}
+    </main>
+  );
+}
+
+function BountyCard(props: { bounty: Bounty }) {
+  return (
+    <Link href={props.bounty.task.url} target="_blank" rel="noopener">
+      <div className="flex items-center gap-4">
+        <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
+          <img
+            src={props.bounty.org.avatar_url!}
+            alt={props.bounty.org.name!}
+          />
         </div>
-        <div className="flex items-center gap-4 pb-4">
-          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
-            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
-          </div>
-          <div className="flex flex-wrap gap-2 text-white">
-            <span className="font-emoji text-sm">💎</span>
-            <div className="space-y-0.5">
-              <p>
-                <span className="font-bold">{kreme}</span> shared a{" "}
-                <span className="font-bold">$7</span> bounty
-              </p>
-              <div className="whitespace-nowrap text-gray-500">
-                {" "}
-                about 7 hours ago
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex shrink-0 items-center justify-center rounded-xl h-12 w-12 bg-white">
-            <img className="h-9 w-9" src="/favicon.ico" alt="algora" />
-          </div>
-          <div className="flex flex-wrap gap-2 text-white">
-            <span className="font-emoji text-sm">💎</span>
-            <div className="space-y-0.5">
-              <p>
-                <span className="font-bold">{zaf}</span> shared a{" "}
-                <span className="font-bold">$7,777</span> bounty
-              </p>
-              <div className="whitespace-nowrap text-gray-500">
-                {" "}
-                about 7 hours ago
-              </div>
+        <div className="flex flex-wrap gap-2 text-white">
+          <span className="font-emoji text-sm">💎</span>
+          <div className="space-y-0.5">
+            <p>
+              <span className="font-bold">{props.bounty.org.name}</span> shared
+              a{" "}
+              <span className="font-bold">{props.bounty.reward_formatted}</span>{" "}
+              bounty
+            </p>
+            <div className="whitespace-nowrap text-gray-500">
+              {props.bounty.created_at.getHours()} hours ago
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </Link>
+  );
+}
+
+function AwardCard(props: { award: Bounty }) {
+  return (
+    <Link href={props.award.task.url} target="_blank" rel="noopener">
+      <div className="flex items-center gap-4">
+        <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
+          <img src={props.award.org.avatar_url!} alt={props.award.org.name!} />
+        </div>
+        <div className="flex flex-wrap gap-2 text-white">
+          <span className="font-emoji text-sm">💎</span>
+          <div className="space-y-0.5">
+            <p>
+              <span className="font-bold">{props.award.org.name}</span> has been
+              awarded{" "}
+              <span className="font-bold">{props.award.reward_formatted}</span>
+            </p>
+            <div className="whitespace-nowrap text-gray-500">
+              {props.award.created_at.getHours()} hours ago
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
