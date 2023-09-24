@@ -9,12 +9,12 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
-import { invoke } from "@tauri-apps/api/tauri";
-// import {
-//   isPermissionGranted,
-//   requestPermission,
-//   sendNotification,
-// } from "@tauri-apps/api/notification";
+// import { invoke } from "@tauri-apps/api/tauri";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from "@tauri-apps/api/notification";
 
 type RemoteData<T> =
   | { _tag: "loading" }
@@ -37,24 +37,13 @@ export default function Home() {
   //     .catch(console.error);
   // }, []);
 
-  // const notification = async () => {
-  //   let permissionGranted = await isPermissionGranted();
-  //   if (!permissionGranted) {
-  //     const permission = await requestPermission();
-  //     permissionGranted = permission === "granted";
-  //   }
-  //   if (permissionGranted) {
-  //     sendNotification("Tauri is awesome!");
-  //     sendNotification({ title: "TAURI", body: "Tauri is awesome!" });
-  //   }
-  // };
-
   const [bounties, setBounties] = useState<RemoteData<Bounty[]>>({
     _tag: "loading",
   });
   const [awards, setAwards] = useState<RemoteData<Bounty[]>>({
     _tag: "loading",
   });
+
   useEffect(() => {
     const ac = new AbortController();
 
@@ -73,10 +62,7 @@ export default function Home() {
       .catch((error) => setBounties({ _tag: "failure", error }));
 
     algora.bounty.list
-      .query(
-        { org: "highlight", limit: 4, rewarded: true },
-        { signal: ac.signal }
-      )
+      .query({ org: "capgo", limit: 4, rewarded: true }, { signal: ac.signal })
       .then(({ items: data }) =>
         data.sort((a, b) => {
           return b.created_at.getTime() - a.created_at.getTime();
@@ -88,6 +74,65 @@ export default function Home() {
 
     return () => ac.abort();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const ac = new AbortController();
+
+      algora.bounty.listWithClaims
+        .query({ limit: 8 }, { signal: ac.signal })
+        .then(({ items: data }) =>
+          data.filter((b) => b.type === "standard" && b.status === "active")
+        )
+        .then((data) =>
+          data.sort((a, b) => {
+            return b.created_at.getTime() - a.created_at.getTime();
+          })
+        )
+        .then((data) => data.slice(0, 4))
+        .then((data) => setBounties({ _tag: "success", data }))
+        .catch((error) => setBounties({ _tag: "failure", error }));
+
+      algora.bounty.list
+        .query(
+          { org: "capgo", limit: 4, rewarded: true },
+          { signal: ac.signal }
+        )
+        .then(({ items: data }) =>
+          data.sort((a, b) => {
+            return b.created_at.getTime() - a.created_at.getTime();
+          })
+        )
+        .then((data) => data.slice(0, 4))
+        .then((data) => setAwards({ _tag: "success", data }))
+        .catch((error) => setAwards({ _tag: "failure", error }));
+
+      return () => ac.abort();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const notification = async () => {
+      let permissionGranted = await isPermissionGranted();
+      if (!permissionGranted) {
+        const permission = await requestPermission();
+        permissionGranted = permission === "granted";
+      }
+      if (permissionGranted && bounties._tag === "success") {
+        const orgName = bounties.data[0].org.name;
+        const amount = bounties.data[0].reward_formatted;
+        const time = bounties.data[0].created_at.getTime();
+        let now = new Date().getTime();
+        const diffMs = Math.abs(now - time);
+        if (diffMs < 60000) {
+          console.log("new notification");
+          sendNotification(`${orgName} shared a ${amount} bounty`);
+        }
+      }
+    };
+    notification();
+  }, [bounties]);
 
   return (
     <main className="h-[368px] flex flex-col rounded-2xl bg-[#040217] items-center pt-2 px-2">
