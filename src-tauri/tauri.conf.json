@@ -8,8 +8,8 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "algora-desktop",
-    "version": "0.1.0"
+    "productName": "Algora",
+    "version": "1.0.0"
   },
   "tauri": {
     "systemTray": {
