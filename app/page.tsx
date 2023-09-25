@@ -21,7 +21,7 @@ type RemoteData<T> =
   | { _tag: "failure"; error: Error }
   | { _tag: "success"; data: T };
 
-type Bounty = AlgoraOutput["bounty"]["list"]["items"][number];
+type Bounty = AlgoraOutput["bounty"]["listWithClaims"]["items"][number];
 
 export default function Home() {
   const [page, setPage] = useState("bounties");
@@ -61,14 +61,13 @@ export default function Home() {
       .then((data) => setBounties({ _tag: "success", data }))
       .catch((error) => setBounties({ _tag: "failure", error }));
 
-    algora.bounty.list
-      .query({ org: "capgo", limit: 4, rewarded: true }, { signal: ac.signal })
+    algora.bounty.listWithClaims
+      .query({ limit: 4, status: "completed" }, { signal: ac.signal })
       .then(({ items: data }) =>
         data.sort((a, b) => {
           return b.created_at.getTime() - a.created_at.getTime();
         })
       )
-      .then((data) => data.slice(0, 4))
       .then((data) => setAwards({ _tag: "success", data }))
       .catch((error) => setAwards({ _tag: "failure", error }));
 
@@ -92,20 +91,6 @@ export default function Home() {
         .then((data) => data.slice(0, 4))
         .then((data) => setBounties({ _tag: "success", data }))
         .catch((error) => setBounties({ _tag: "failure", error }));
-
-      algora.bounty.list
-        .query(
-          { org: "capgo", limit: 4, rewarded: true },
-          { signal: ac.signal }
-        )
-        .then(({ items: data }) =>
-          data.sort((a, b) => {
-            return b.created_at.getTime() - a.created_at.getTime();
-          })
-        )
-        .then((data) => data.slice(0, 4))
-        .then((data) => setAwards({ _tag: "success", data }))
-        .catch((error) => setAwards({ _tag: "failure", error }));
 
       return () => ac.abort();
     }, 30000);
@@ -133,6 +118,20 @@ export default function Home() {
     };
     notification();
   }, [bounties]);
+
+  const awardsPage = () => {
+    algora.bounty.listWithClaims
+      .query({ limit: 4, status: "completed" })
+      .then(({ items: data }) =>
+        data.sort((a, b) => {
+          return b.created_at.getTime() - a.created_at.getTime();
+        })
+      )
+      .then((data) => setAwards({ _tag: "success", data }))
+      .catch((error) => setAwards({ _tag: "failure", error }));
+
+    return setPage("awards");
+  };
 
   return (
     <main className="h-[368px] flex flex-col rounded-2xl bg-[#040217] items-center pt-2 px-2">
@@ -169,7 +168,7 @@ export default function Home() {
           className={`flex grow justify-center px-3 py-1.5 rounded-sm ${
             page === "awards" ? "bg-[#5046e5] text-white" : "text-gray-400"
           }`}
-          onClick={() => setPage("awards")}
+          onClick={awardsPage}
         >
           Awards
         </button>
@@ -204,13 +203,20 @@ export default function Home() {
 }
 
 function BountyCard(props: { bounty: Bounty }) {
+  const url = props.bounty.org.avatar_url;
+  let avatar;
+  if (url && url.startsWith("https://")) {
+    avatar = url;
+  } else if (url) {
+    avatar = `http://console.algora.io/${url}`;
+  }
   return (
     <Link href={props.bounty.task.url} target="_blank" rel="noopener">
       <div className="flex items-center gap-4">
         <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
           <img
-            src={props.bounty.org.avatar_url!}
-            alt={props.bounty.org.name!}
+            src={avatar}
+            alt={props.bounty.org.name ?? props.bounty.org.handle}
           />
         </div>
         <div className="flex gap-2">
@@ -233,18 +239,32 @@ function BountyCard(props: { bounty: Bounty }) {
 }
 
 function AwardCard(props: { award: Bounty }) {
+  const url = props.award.org.avatar_url;
+  let avatar;
+  if (url && url.startsWith("https://")) {
+    avatar = url;
+  } else if (url) {
+    avatar = `http://console.algora.io/${url}`;
+  }
+  const succ = props.award.claims
+    .filter((s) => s.status === "payment_succeeded")
+    .pop();
+  const name = succ?.solver.login;
   return (
     <Link href={props.award.task.url} target="_blank" rel="noopener">
       <div className="flex items-center gap-4">
         <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
-          <img src={props.award.org.avatar_url!} alt={props.award.org.name!} />
+          <img
+            src={avatar}
+            alt={props.award.org.name ?? props.award.org.handle}
+          />
         </div>
         <div className="flex gap-2">
           <span className="font-emoji text-sm">💎</span>
           <div className="space-y-0.5">
             <p className="text-gray-200 hover:text-white">
-              <span className="font-bold">{props.award.org.name}</span> has been
-              awarded{" "}
+              <span className="font-bold">{name}</span> has been{" "}
+              {props.award.type === "tip" ? "tipped" : "awarded"}{" "}
               <span className="font-bold">{props.award.reward_formatted}</span>
             </p>
             <div className="whitespace-nowrap text-gray-500">
