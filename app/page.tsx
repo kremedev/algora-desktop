@@ -208,7 +208,7 @@ function BountyCard(props: { bounty: Bounty }) {
   if (url && url.startsWith("https://")) {
     avatar = url;
   } else if (url) {
-    avatar = `http://console.algora.io/${url}`;
+    avatar = `https://console.algora.io/${url}`;
   }
   return (
     <Link href={props.bounty.task.url} target="_blank" rel="noopener">
@@ -244,7 +244,7 @@ function AwardCard(props: { award: Bounty }) {
   if (url && url.startsWith("https://")) {
     avatar = url;
   } else if (url) {
-    avatar = `http://console.algora.io/${url}`;
+    avatar = `https://console.algora.io/${url}`;
   }
   const succ = props.award.claims
     .filter((s) => s.status === "payment_succeeded")
