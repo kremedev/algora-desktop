@@ -37,6 +37,8 @@ export default function Home() {
   //     .catch(console.error);
   // }, []);
 
+  const [permission, setPermission] = useState<boolean>(false);
+  const [lastBountyId, setLastBountyId] = useState<string>();
   const [bounties, setBounties] = useState<RemoteData<Bounty[]>>({
     _tag: "loading",
   });
@@ -44,8 +46,21 @@ export default function Home() {
     _tag: "loading",
   });
 
+  const notification = async () => {
+    let permissionGranted = await isPermissionGranted();
+    if (!permissionGranted) {
+      const permission = await requestPermission();
+      permissionGranted = permission === "granted";
+    }
+    if (permissionGranted) {
+      setPermission(true);
+    }
+  };
+
   useEffect(() => {
     const ac = new AbortController();
+
+    notification();
 
     algora.bounty.listWithClaims
       .query({ limit: 8 }, { signal: ac.signal })
@@ -58,7 +73,9 @@ export default function Home() {
         })
       )
       .then((data) => data.slice(0, 4))
-      .then((data) => setBounties({ _tag: "success", data }))
+      .then((data) => {
+        setBounties({ _tag: "success", data }), setLastBountyId(data[0].id);
+      })
       .catch((error) => setBounties({ _tag: "failure", error }));
 
     algora.bounty.listWithClaims
@@ -98,25 +115,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const notification = async () => {
-      let permissionGranted = await isPermissionGranted();
-      if (!permissionGranted) {
-        const permission = await requestPermission();
-        permissionGranted = permission === "granted";
-      }
-      if (permissionGranted && bounties._tag === "success") {
-        const orgName = bounties.data[0].org.name;
-        const amount = bounties.data[0].reward_formatted;
-        const time = bounties.data[0].created_at.getTime();
-        let now = new Date().getTime();
-        const diffMs = Math.abs(now - time);
-        if (diffMs < 60000) {
-          console.log("new notification");
-          sendNotification(`${orgName} shared a ${amount} bounty`);
-        }
-      }
-    };
-    notification();
+    if (
+      permission &&
+      bounties._tag === "success" &&
+      bounties.data[0].id !== lastBountyId
+    ) {
+      const lastData = bounties.data[0];
+      const orgName = lastData.org.name;
+      const amount = lastData.reward_formatted;
+      console.log("new notification"); // dev mode notifications are not working on macos
+      sendNotification(`${orgName} shared a ${amount} bounty`);
+      setLastBountyId(lastData.id);
+    }
   }, [bounties]);
 
   const awardsPage = () => {
