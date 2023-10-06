@@ -222,7 +222,7 @@ function BountyCard(props: { bounty: Bounty }) {
   }
   return (
     <Link href={props.bounty.task.url} target="_blank" rel="noopener">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 group">
         <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
           <img
             src={avatar}
@@ -232,7 +232,7 @@ function BountyCard(props: { bounty: Bounty }) {
         <div className="flex gap-2">
           <span className="font-emoji text-sm">💎</span>
           <div className="space-y-0.5">
-            <p className="text-gray-200 hover:text-white">
+            <p className="text-gray-200 group-hover:text-white">
               <span className="font-bold">{props.bounty.org.name}</span> shared
               a{" "}
               <span className="font-bold">{props.bounty.reward_formatted}</span>{" "}
@@ -262,7 +262,7 @@ function AwardCard(props: { award: Bounty }) {
   const name = succ?.solver.login;
   return (
     <Link href={props.award.task.url} target="_blank" rel="noopener">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 group">
         <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
           <img
             src={avatar}
@@ -270,9 +270,9 @@ function AwardCard(props: { award: Bounty }) {
           />
         </div>
         <div className="flex gap-2">
-          <span className="font-emoji text-sm">💎</span>
+          <span className="font-emoji text-sm">{props.award.type === "tip" ? "💸" : "💰"}</span>
           <div className="space-y-0.5">
-            <p className="text-gray-200 hover:text-white">
+            <p className="text-gray-200 group-hover:text-white">
               <span className="font-bold">{name}</span> has been{" "}
               {props.award.type === "tip" ? "tipped" : "awarded"}{" "}
               <span className="font-bold">{props.award.reward_formatted}</span>
