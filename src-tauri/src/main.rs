@@ -1,11 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("{} from algora", name)
-}
-
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tauri_plugin_positioner::{Position, WindowExt};
 
@@ -14,7 +9,6 @@ fn main() {
     let system_tray_menu = SystemTrayMenu::new().add_item(quit);
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
         .plugin(tauri_plugin_positioner::init())
         .system_tray(SystemTray::new().with_menu(system_tray_menu))
         .on_system_tray_event(|app, event| {

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
@@ -9,7 +10,6 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
-// import { invoke } from "@tauri-apps/api/tauri";
 import {
   isPermissionGranted,
   requestPermission,
@@ -25,21 +25,11 @@ type Bounty = AlgoraOutput["bounty"]["listWithClaims"]["items"][number];
 
 export default function Home() {
   const [page, setPage] = useState("bounties");
-
-  // const [zaf, setZaf] = useState("fail");
-  // const [kreme, setKreme] = useState("fail");
-  // useEffect(() => {
-  //   invoke<string>("greet", { name: "zaf" })
-  //     .then((m) => setZaf(m))
-  //     .catch(console.error);
-  //   invoke<string>("greet", { name: "kreme" })
-  //     .then((m) => setKreme(m))
-  //     .catch(console.error);
-  // }, []);
-
   const [permission, setPermission] = useState<boolean>(false);
-  const [lastBountyId, setLastBountyId] = useState<string>();
   const [bounties, setBounties] = useState<RemoteData<Bounty[]>>({
+    _tag: "loading",
+  });
+  const [oldBounties, setOldBounties] = useState<RemoteData<Bounty[]>>({
     _tag: "loading",
   });
   const [awards, setAwards] = useState<RemoteData<Bounty[]>>({
@@ -74,7 +64,8 @@ export default function Home() {
       )
       .then((data) => data.slice(0, 4))
       .then((data) => {
-        setBounties({ _tag: "success", data }), setLastBountyId(data[0].id);
+        setBounties({ _tag: "success", data }),
+          setOldBounties({ _tag: "success", data });
       })
       .catch((error) => setBounties({ _tag: "failure", error }));
 
@@ -118,14 +109,17 @@ export default function Home() {
     if (
       permission &&
       bounties._tag === "success" &&
-      bounties.data[0].id !== lastBountyId
+      oldBounties._tag === "success" &&
+      bounties.data[0].id !== oldBounties.data[0].id
     ) {
-      const lastData = bounties.data[0];
-      const orgName = lastData.org.name;
-      const amount = lastData.reward_formatted;
-      console.log("new notification"); // dev mode notifications are not working on macos
-      sendNotification(`${orgName} shared a ${amount} bounty`);
-      setLastBountyId(lastData.id);
+      const data = bounties.data;
+      const oldIds = oldBounties.data.map((d) => d.id);
+      const newBounties = data.filter((d) => !oldIds.includes(d.id));
+      newBounties.forEach((b) => {
+        console.log(`${b.org.name} shared a ${b.reward_formatted} bounty`); // dev mode notifications are not working on macos
+        sendNotification(`${b.org.name} shared a ${b.reward_formatted} bounty`);
+      });
+      setOldBounties({ _tag: "success", data });
     }
   }, [bounties]);
 
@@ -270,7 +264,9 @@ function AwardCard(props: { award: Bounty }) {
           />
         </div>
         <div className="flex gap-2">
-          <span className="font-emoji text-sm">{props.award.type === "tip" ? "💸" : "💰"}</span>
+          <span className="font-emoji text-sm">
+            {props.award.type === "tip" ? "💸" : "💰"}
+          </span>
           <div className="space-y-0.5">
             <p className="text-gray-200 group-hover:text-white">
               <span className="font-bold">{name}</span> has been{" "}
