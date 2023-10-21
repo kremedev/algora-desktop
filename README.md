@@ -1,5 +1,5 @@
-<img width="386" alt="algora" src="https://github.com/kremedev/algora-desktop/assets/134702704/1e8cb2f0-61d9-4846-a44c-56856791ea2d">
-<img width="386" alt="algora2" src="https://github.com/kremedev/algora-desktop/assets/134702704/6174c1cf-e688-40a6-944d-5a2d102df22f">
+<img width="385" alt="algora" src="https://github.com/kremedev/algora-desktop/assets/134702704/6b6bcd9a-5d59-44f0-bc0a-52fa25a335e9">
+<img width="385" alt="algora2" src="https://github.com/kremedev/algora-desktop/assets/134702704/7c25b1a6-c3cc-4ed2-8cfb-15a288889e85">
 
 ## Prerequisites
 
