@@ -62,7 +62,6 @@ export default function Home() {
           return b.created_at.getTime() - a.created_at.getTime();
         })
       )
-      .then((data) => data.slice(0, 4))
       .then((data) => {
         setBounties({ _tag: "success", data }),
           setOldBounties({ _tag: "success", data });
@@ -96,7 +95,6 @@ export default function Home() {
             return b.created_at.getTime() - a.created_at.getTime();
           })
         )
-        .then((data) => data.slice(0, 4))
         .then((data) => setBounties({ _tag: "success", data }))
         .catch((error) => setBounties({ _tag: "failure", error }));
 
@@ -178,9 +176,9 @@ export default function Home() {
         </button>
       </div>
       {page === "bounties" ? (
-        <ul className="flex w-full flex-col gap-3 p-4 text-xs">
+        <ul className="flex w-full flex-col gap-3 p-3.5 text-xs">
           {bounties._tag === "success" &&
-            bounties.data.map((bounty) => (
+            bounties.data.slice(0, 4).map((bounty) => (
               <li key={bounty.id}>
                 <BountyCard bounty={bounty} />
               </li>
@@ -190,7 +188,7 @@ export default function Home() {
           )}
         </ul>
       ) : (
-        <ul className="flex w-full flex-col gap-3 p-4 text-xs">
+        <ul className="flex w-full flex-col gap-3 p-3.5 text-xs">
           {awards._tag === "success" &&
             awards.data.map((award) => (
               <li key={award.id}>
@@ -243,25 +241,31 @@ function BountyCard(props: { bounty: Bounty }) {
 }
 
 function AwardCard(props: { award: Bounty }) {
-  const url = props.award.org.avatar_url;
-  let avatar;
-  if (url && url.startsWith("https://")) {
-    avatar = url;
-  } else if (url) {
-    avatar = `https://console.algora.io/${url}`;
+  const orgUrl = props.award.org.avatar_url;
+  let orgAvatar;
+  if (orgUrl && orgUrl.startsWith("https://")) {
+    orgAvatar = orgUrl;
+  } else if (orgUrl) {
+    orgAvatar = `https://console.algora.io/${orgUrl}`;
   }
   const succ = props.award.claims
     .filter((s) => s.status === "payment_succeeded")
     .pop();
-  const name = succ?.solver.login;
+  const userUrl = succ?.solver.avatar_url;
+  const userName = succ?.solver.login;
   return (
     <Link href={props.award.task.url} target="_blank" rel="noopener">
       <div className="flex items-center gap-4 group">
-        <div className="flex shrink-0 rounded-xl h-12 w-12 overflow-hidden">
-          <img
-            src={avatar}
-            alt={props.award.org.name ?? props.award.org.handle}
-          />
+        <div className="flex -space-x-1 h-12 items-center">
+          <div className="flex shrink-0 rounded-xl h-10 w-10 overflow-hidden ring-4 ring-gray-950">
+            <img
+              src={orgAvatar}
+              alt={props.award.org.name ?? props.award.org.handle}
+            />
+          </div>
+          <div className="flex shrink-0 rounded-xl h-10 w-10 overflow-hidden ring-4 ring-gray-950">
+            <img src={userUrl} alt={userName ?? "user avatar"} />
+          </div>
         </div>
         <div className="flex gap-2">
           <span className="font-emoji text-sm">
@@ -269,7 +273,7 @@ function AwardCard(props: { award: Bounty }) {
           </span>
           <div className="space-y-0.5">
             <p className="text-gray-200 group-hover:text-white">
-              <span className="font-bold">{name}</span> has been{" "}
+              <span className="font-bold">{userName}</span> has been{" "}
               {props.award.type === "tip" ? "tipped" : "awarded"}{" "}
               <span className="font-bold">{props.award.reward_formatted}</span>
             </p>
